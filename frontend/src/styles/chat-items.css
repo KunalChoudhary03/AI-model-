@@ -1,0 +1,108 @@
+.chat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  margin: 4px 0;
+  border-radius: 8px;
+  background-color: transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.chat-item:hover {
+  background-color: var(--hover-color);
+}
+
+.chat-item.active {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.chat-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0; /* Enable text truncation */
+}
+
+.chat-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.chat-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.delete-chat-button {
+  opacity: 0;
+  background: none;
+  border: none;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.chat-item:hover .delete-chat-button {
+  opacity: 1;
+}
+
+.delete-chat-button:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: rgb(239, 68, 68);
+}
+
+/* Delete button tooltip */
+.delete-chat-button::after {
+  content: 'Delete chat';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%) translateX(100%);
+  background-color: var(--hover-color);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  margin-right: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.delete-chat-button:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(110%);
+}
+
+/* Mobile styles */
+@media (max-width: 767px) {
+  .delete-chat-button {
+    opacity: 1; /* Always show delete button on mobile */
+    padding: 8px; /* Larger touch target */
+  }
+  
+  .delete-chat-button::after {
+    display: none; /* Hide tooltip on mobile */
+  }
+  
+  .chat-item {
+    padding: 14px 12px; /* Larger touch target */
+  }
+}
