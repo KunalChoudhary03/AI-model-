@@ -277,7 +277,7 @@ html, body {
   background: #23243a;
   color: #fff;
   font-size: 1.18rem;
-  padding: 16px 18px;
+  padding: 12px 14px;
   box-shadow: 0 2px 8px var(--shadow-color);
   outline: none;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
@@ -496,7 +496,8 @@ html, body {
   
   .chat-input-form textarea {
     font-size: 16px; /* Prevent zoom on iOS */
-    padding: 12px;
+    padding: 8px 10px;
+    min-height: 50px;
   }
   
   .menu-button {
@@ -555,6 +556,29 @@ html, body {
   
   .chat-input-form {
     gap: 8px;
+  }
+}
+
+/* Extra small devices (phones, less than 576px) */
+@media (max-width: 575px) {
+  .chat-input-form textarea {
+    font-size: 14px;
+    padding: 6px 8px;
+    min-height: 45px;
+    border-radius: 12px;
+  }
+  
+  .chat-input-container {
+    padding: 8px;
+  }
+  
+  .chat-header {
+    padding: 0.5rem;
+    min-height: 48px;
+  }
+  
+  .chat-title {
+    font-size: 0.8rem;
   }
 }
 
