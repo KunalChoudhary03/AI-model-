@@ -1,4 +1,10 @@
 require('dotenv').config({ path: __dirname + '/.env' });
+
+// Set NODE_ENV for proper production detection
+if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = process.env.PORT ? 'production' : 'development';
+}
+
 const app = require('./src/app');
 const connectDb = require('./src/db/db');
 const initSocketServer = require('./src/sockets/socket.server');

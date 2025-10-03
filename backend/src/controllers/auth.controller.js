@@ -18,7 +18,13 @@ async function registerUser(req,res) {
     })
     const token = jwt.sign({id:user._id},process.env.JWT_SECRET)
 
-    res.cookie('token',token)
+    // Set cookie with proper attributes for production
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    })
     res.status(201).json({
         message: "User registered sucessfully",
         user:{
@@ -44,7 +50,13 @@ async function loginUser(req,res) {
     }
     const token = jwt.sign({id:user._id},process.env.JWT_SECRET);
 
-    res.cookie("token",token);
+    // Set cookie with proper attributes for production
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    })
     res.status(200).json({
         message:"User Logged in successfully",
         user:{
@@ -58,6 +70,7 @@ async function loginUser(req,res) {
 async function getProfile(req,res) {
     const user = req.user;
     res.status(200).json({
+        success: true,
         user:{
            email:user.email,
            _id: user._id,
@@ -67,7 +80,12 @@ async function getProfile(req,res) {
 }
 
 async function logoutUser(req,res) {
-    res.clearCookie('token');
+    // Clear cookie with same attributes used when setting it
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    });
     res.status(200).json({
         message: "Logged out successfully"
     })
