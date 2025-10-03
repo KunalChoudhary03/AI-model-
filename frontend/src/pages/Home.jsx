@@ -12,7 +12,23 @@ import NamePromptModal from "../components/NamePromptModal";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:3000", { withCredentials: true });
+const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:3000", { 
+  withCredentials: true,
+  transports: ['websocket', 'polling']
+});
+
+// Add socket connection debugging
+socket.on('connect', () => {
+  console.log('✅ Socket connected to backend');
+});
+
+socket.on('disconnect', () => {
+  console.log('❌ Socket disconnected from backend');
+});
+
+socket.on('connect_error', (error) => {
+  console.error('🔌 Socket connection error:', error);
+});
 
 const Home = () => {
   const [user, setUser] = useState(() => {
@@ -240,6 +256,7 @@ const Home = () => {
   // Listen for AI response from backend
   useEffect(() => {
     function handleAIResponse({ content, chat }) {
+      console.log('🤖 Received AI response:', { content: content?.substring(0, 50) + '...', chat });
       setIsAiThinking(false);
       setPreviousChats(prev => {
         let updatedCurrentChat = null;
@@ -333,11 +350,13 @@ const Home = () => {
     setIsAiThinking(true);
 
     // Send message to backend via socket
-    socket.emit("ai-message", {
+    const messageData = {
       chat: activeChat.id,
       content: newMessage.text,
       userName: user ? `${user.fullName?.firstName} ${user.fullName?.lastName}` : null
-    });
+    };
+    console.log('📤 Sending message to AI:', messageData);
+    socket.emit("ai-message", messageData);
   };
 
   const handleTextareaInput = (e) => {

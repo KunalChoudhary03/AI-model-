@@ -9,7 +9,12 @@ const { createMemory, queryMemory } = require("../services/vector.service");
 function initSocketServer(httpServer) {
   const io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:5173", // frontend URL
+      origin: [
+        "http://localhost:5173",
+        "https://jeeravan.vercel.app",
+        "https://jeeravan-git-main-kunalchoudhary03s-projects.vercel.app",
+        "https://jeeravan-kunalchoudhary03s-projects.vercel.app"
+      ], // frontend URLs
       methods: ["GET", "POST"],
       credentials: true
     }
@@ -93,9 +98,12 @@ function initSocketServer(httpServer) {
         let response = "Sorry, main abhi available nahi hun. Thoda wait kar ke try karo! 🌶️";
         try {
           const userName = messagePayload.userName || `${socket.user.fullName?.firstName || 'User'} ${socket.user.fullName?.lastName || ''}`.trim();
+          console.log(`🤖 Generating AI response for user: ${userName}`);
           response = await aiService.generateResponse([...ltm, ...stm], userName);
+          console.log(`✅ AI response generated successfully for ${userName}`);
         } catch (aiErr) {
-          console.error("AI service error:", aiErr.message, aiErr.stack);
+          console.error("❌ AI service error:", aiErr.message);
+          console.error("AI error stack:", aiErr.stack);
           // Provide a more helpful fallback response
           const userName = socket.user.fullName?.firstName || 'Dost';
           const fallbackResponses = [
