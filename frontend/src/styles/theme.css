@@ -482,11 +482,23 @@
 }
 
 .mobile-only {
-  display: none;
+  display: none !important;
 }
 
 .desktop-only {
-  display: flex;
+  display: flex !important;
+}
+
+/* Debug mobile layout */
+@media (max-width: 768px) {
+  .mobile-only {
+    display: flex !important;
+    background: rgba(255, 0, 0, 0.1); /* Debug red background */
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
 }
 
 .chat-header-actions {
