@@ -15,9 +15,9 @@ import "react-toastify/dist/ReactToastify.css";
 const Home = () => {
   const [socket, setSocket] = useState(null);
   const [user, setUser] = useState(() => {
-    // Load user from localStorage on initial load
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    // Don't load user from localStorage initially - let useEffect handle it
+    // This prevents showing wrong user data before server verification
+    return null;
   });
   const [backendStatus, setBackendStatus] = useState('checking'); // 'checking', 'awake', 'sleeping', 'error'
   const [isRetrying, setIsRetrying] = useState(false);
@@ -44,6 +44,27 @@ const Home = () => {
   const [isFirstLogin, setIsFirstLogin] = useState(false);
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
+
+  // Utility function to clear all user data
+  const clearUserData = () => {
+    console.log('🧹 Clearing all user data');
+    localStorage.removeItem('user');
+    localStorage.removeItem('currentChat');
+    localStorage.removeItem('previousChats');
+    setUser(null);
+    setPreviousChats([]);
+    setCurrentChat({
+      messages: [{ 
+        id: 1, 
+        text: "Bhiya Ram! Main aapka Jeeravan hun 🌶️ - Indore ki dil se aur Malwa ka swaad liye hue! Koi bhi sawal poocho, main hazir hun madad karne ke liye!", 
+        sender: "ai" 
+      }],
+    });
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -111,13 +132,30 @@ const Home = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
+          // Check if this is a different user
+          const storedUser = localStorage.getItem('user');
+          let isDifferentUser = false;
+          
+          if (storedUser) {
+            try {
+              const parsedStoredUser = JSON.parse(storedUser);
+              if (parsedStoredUser._id !== data.user._id) {
+                isDifferentUser = true;
+                console.log('🔄 Different user detected in retry, clearing previous user data');
+                clearUserData();
+              }
+            } catch (err) {
+              isDifferentUser = true;
+            }
+          }
+          
           setUser(data.user);
           localStorage.setItem('user', JSON.stringify(data.user));
           setBackendStatus('awake');
           toast.success("Connected to server! Welcome back!");
           // Initialize socket connection
           initializeSocket();
-          loadUserChats(false);
+          loadUserChats(isDifferentUser);
         }
       } else if (response.status === 401) {
         setBackendStatus('awake');
@@ -197,6 +235,26 @@ const Home = () => {
       })
       .then((data) => {
         if (data.success) {
+          // Check if this is a different user than what's stored in localStorage
+          const storedUser = localStorage.getItem('user');
+          let isDifferentUser = false;
+          
+          if (storedUser) {
+            try {
+              const parsedStoredUser = JSON.parse(storedUser);
+              // Compare user IDs to detect if different user logged in
+              if (parsedStoredUser._id !== data.user._id) {
+                isDifferentUser = true;
+                console.log('🔄 Different user detected, clearing previous user data');
+                // Clear all localStorage data for previous user
+                clearUserData();
+              }
+            } catch (err) {
+              console.log('Error comparing stored user:', err);
+              isDifferentUser = true; // Treat as different user if parsing fails
+            }
+          }
+          
           const isNewLogin = !user && data.user; // User wasn't loaded before but now is
           setUser(data.user);
           localStorage.setItem('user', JSON.stringify(data.user));
@@ -205,8 +263,8 @@ const Home = () => {
           // Initialize socket connection when user is authenticated
           initializeSocket();
           
-          // Load user's chats
-          loadUserChats(isNewLogin);
+          // Load user's chats (force reload if different user)
+          loadUserChats(isNewLogin || isDifferentUser);
         }
       })
       .catch((err) => {
@@ -226,18 +284,7 @@ const Home = () => {
         
         setBackendStatus('error');
         // Otherwise clear all user data
-        localStorage.removeItem('user');
-        localStorage.removeItem('currentChat');
-        localStorage.removeItem('previousChats');
-        setUser(null);
-        setPreviousChats([]);
-        setCurrentChat({
-          messages: [{ 
-            id: 1, 
-            text: "Bhiya Ram! Main aapka Jeeravan hun 🌶️ - Indore ki dil se aur Malwa ka swaad liye hue! Koi bhi sawal poocho, main hazir hun madad karne ke liye!", 
-            sender: "ai" 
-          }],
-        });
+        clearUserData();
       });
   }, []);
 
@@ -261,7 +308,7 @@ const Home = () => {
   }, [user]);
 
   // Function to load user's existing chats
-  const loadUserChats = async (isNewLogin = false) => {
+  const loadUserChats = async (shouldCreateFirstChat = false) => {
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/chat`, {
         method: "GET",
@@ -282,17 +329,21 @@ const Home = () => {
           if (chatsWithActiveFlag[0].messages.length > 0) {
             setCurrentChat({ messages: chatsWithActiveFlag[0].messages });
           }
-        } else if (isNewLogin) {
+          
+          // Save new user's chats to localStorage
+          localStorage.setItem('previousChats', JSON.stringify(chatsWithActiveFlag));
+          localStorage.setItem('currentChat', JSON.stringify({ messages: chatsWithActiveFlag[0].messages }));
+        } else if (shouldCreateFirstChat) {
           // No chats exist and user just logged in - create first chat automatically
           createFirstChat();
         }
-      } else if (isNewLogin) {
+      } else if (shouldCreateFirstChat) {
         // API call failed but user just logged in - create first chat
         createFirstChat();
       }
     } catch (error) {
       console.log("Failed to load user chats:", error);
-      if (isNewLogin) {
+      if (shouldCreateFirstChat) {
         // Create first chat even if loading fails
         createFirstChat();
       }
@@ -494,10 +545,7 @@ const Home = () => {
         if (error.message.includes('401')) {
           toast.error("Your session has expired. Please login again!");
           // Clear stored user data
-          localStorage.removeItem('user');
-          localStorage.removeItem('currentChat');
-          localStorage.removeItem('previousChats');
-          setUser(null);
+          clearUserData();
           navigate('/login');
         } else if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
           setBackendStatus('sleeping');
