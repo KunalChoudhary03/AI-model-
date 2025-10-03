@@ -132,8 +132,17 @@ const Home = () => {
       })
       .catch((err) => {
         console.log("User not logged in or profile fetch failed:", err);
+        
+        // If we have a stored user, keep using it but show a warning about backend connectivity
+        const storedUser = localStorage.getItem('user');
+        if (storedUser && err.message.includes('fetch')) {
+          console.log("Backend might be sleeping, using cached user data");
+          // Keep the stored user data and show app normally
+          return;
+        }
+        
+        // Otherwise clear all user data
         localStorage.removeItem('user');
-        // Clear all chat data if user is not logged in
         localStorage.removeItem('currentChat');
         localStorage.removeItem('previousChats');
         setUser(null);
