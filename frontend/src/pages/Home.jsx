@@ -368,11 +368,20 @@ const Home = () => {
       })
       .catch((error) => {
         console.error('Chat creation error:', error);
+        
+        // Check if it's specifically a 401 error
         if (error.message.includes('401')) {
-          toast.error("Please login first to create a chat!");
+          toast.error("Your session has expired. Please login again!");
+          // Clear stored user data
+          localStorage.removeItem('user');
+          localStorage.removeItem('currentChat');
+          localStorage.removeItem('previousChats');
+          setUser(null);
           navigate('/login');
+        } else if (error.message.includes('fetch')) {
+          toast.error("Network error: Backend server might be sleeping. Please wait a moment and try again.");
         } else {
-          toast.error("Network error while creating chat");
+          toast.error("Failed to create chat. Please try again.");
         }
       });
   };
