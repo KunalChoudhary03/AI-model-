@@ -20,6 +20,8 @@ const Home = () => {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
+  const [backendStatus, setBackendStatus] = useState('checking'); // 'checking', 'awake', 'sleeping', 'error'
+  const [isRetrying, setIsRetrying] = useState(false);
   const [currentChat, setCurrentChat] = useState(() => {
     // Load current chat from localStorage on initial load
     const savedCurrentChat = localStorage.getItem('currentChat');
@@ -96,6 +98,39 @@ const Home = () => {
     }
   };
 
+  // Function to check backend health and retry connection
+  const retryBackendConnection = async () => {
+    setIsRetrying(true);
+    setBackendStatus('checking');
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/auth/profile`, {
+        method: "GET",
+        credentials: "include",
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUser(data.user);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setBackendStatus('awake');
+          toast.success("Connected to server! Welcome back!");
+          loadUserChats(false);
+        }
+      } else if (response.status === 401) {
+        setBackendStatus('awake');
+        toast.warning("Please log in to access your chats");
+      }
+    } catch (error) {
+      console.log("Retry failed:", error);
+      setBackendStatus('sleeping');
+      toast.error("Server is still sleeping. Please try again in a moment.");
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   // Fetch user profile on mount
   useEffect(() => {
     // First try to get user from localStorage for immediate display
@@ -125,6 +160,7 @@ const Home = () => {
           const isNewLogin = !user && data.user; // User wasn't loaded before but now is
           setUser(data.user);
           localStorage.setItem('user', JSON.stringify(data.user));
+          setBackendStatus('awake');
           
           // Load user's chats
           loadUserChats(isNewLogin);
@@ -133,14 +169,19 @@ const Home = () => {
       .catch((err) => {
         console.log("User not logged in or profile fetch failed:", err);
         
-        // If we have a stored user, keep using it but show a warning about backend connectivity
+        // If we have a stored user, keep using it but show backend status
         const storedUser = localStorage.getItem('user');
         if (storedUser && err.message.includes('fetch')) {
           console.log("Backend might be sleeping, using cached user data");
+          setBackendStatus('sleeping');
+          toast.warning("Server is sleeping. Using cached data. Click retry to wake it up.", {
+            autoClose: 8000
+          });
           // Keep the stored user data and show app normally
           return;
         }
         
+        setBackendStatus('error');
         // Otherwise clear all user data
         localStorage.removeItem('user');
         localStorage.removeItem('currentChat');
@@ -323,6 +364,12 @@ const Home = () => {
       return;
     }
 
+    // Check if backend is sleeping and suggest retry
+    if (backendStatus === 'sleeping') {
+      toast.warning("Server is sleeping! Click 'Wake Up Server' first, then try creating a chat.");
+      return;
+    }
+
     fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -378,8 +425,9 @@ const Home = () => {
           localStorage.removeItem('previousChats');
           setUser(null);
           navigate('/login');
-        } else if (error.message.includes('fetch')) {
-          toast.error("Network error: Backend server might be sleeping. Please wait a moment and try again.");
+        } else if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+          setBackendStatus('sleeping');
+          toast.error("Network error: Server might be sleeping. Click 'Wake Up Server' and try again.");
         } else {
           toast.error("Failed to create chat. Please try again.");
         }
@@ -474,6 +522,54 @@ const Home = () => {
           user={user}
           onProfileClick={() => navigate('/login')}
         />
+        
+        {/* Backend Status Indicator */}
+        {backendStatus === 'sleeping' && (
+          <div style={{
+            background: 'linear-gradient(45deg, #ff6b35, #f7931e)',
+            color: 'white',
+            padding: '8px 16px',
+            textAlign: 'center',
+            fontSize: '14px',
+            borderRadius: '8px',
+            margin: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <span>🔄 Server is sleeping. Using cached data.</span>
+            <button 
+              onClick={retryBackendConnection}
+              disabled={isRetrying}
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                color: 'white',
+                padding: '4px 12px',
+                borderRadius: '4px',
+                cursor: isRetrying ? 'not-allowed' : 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              {isRetrying ? '⏳ Waking up...' : '🚀 Wake Up Server'}
+            </button>
+          </div>
+        )}
+        
+        {backendStatus === 'checking' && (
+          <div style={{
+            background: 'linear-gradient(45deg, #4CAF50, #45a049)',
+            color: 'white',
+            padding: '8px 16px',
+            textAlign: 'center',
+            fontSize: '14px',
+            borderRadius: '8px',
+            margin: '10px'
+          }}>
+            🔍 Checking server status...
+          </div>
+        )}
+        
         <ChatMessages 
           messages={getVisibleMessages(currentChat.messages)} 
           isAiThinking={isAiThinking}
