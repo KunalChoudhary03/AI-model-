@@ -12,25 +12,8 @@ import NamePromptModal from "../components/NamePromptModal";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:3000", { 
-  withCredentials: true,
-  transports: ['websocket', 'polling']
-});
-
-// Add socket connection debugging
-socket.on('connect', () => {
-  console.log('✅ Socket connected to backend');
-});
-
-socket.on('disconnect', () => {
-  console.log('❌ Socket disconnected from backend');
-});
-
-socket.on('connect_error', (error) => {
-  console.error('🔌 Socket connection error:', error);
-});
-
 const Home = () => {
+  const [socket, setSocket] = useState(null);
   const [user, setUser] = useState(() => {
     // Load user from localStorage on initial load
     const savedUser = localStorage.getItem('user');
@@ -132,6 +115,8 @@ const Home = () => {
           localStorage.setItem('user', JSON.stringify(data.user));
           setBackendStatus('awake');
           toast.success("Connected to server! Welcome back!");
+          // Initialize socket connection
+          initializeSocket();
           loadUserChats(false);
         }
       } else if (response.status === 401) {
@@ -145,6 +130,45 @@ const Home = () => {
     } finally {
       setIsRetrying(false);
     }
+  };
+
+  // Initialize socket connection when user is authenticated
+  const initializeSocket = () => {
+    if (socket) {
+      socket.disconnect();
+    }
+
+    const newSocket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:3000", { 
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+      autoConnect: false // Don't auto-connect
+    });
+
+    // Add socket connection debugging
+    newSocket.on('connect', () => {
+      console.log('✅ Socket connected to backend');
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('❌ Socket disconnected from backend');
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('🔌 Socket connection error:', error);
+      if (error.message.includes('Authentication error')) {
+        console.log('🔐 Authentication required for socket connection');
+        toast.warning("Please login to enable real-time chat");
+      }
+    });
+
+    setSocket(newSocket);
+    
+    // Only connect if we have a user
+    if (user) {
+      newSocket.connect();
+    }
+    
+    return newSocket;
   };
 
   // Fetch user profile on mount
@@ -177,6 +201,9 @@ const Home = () => {
           setUser(data.user);
           localStorage.setItem('user', JSON.stringify(data.user));
           setBackendStatus('awake');
+          
+          // Initialize socket connection when user is authenticated
+          initializeSocket();
           
           // Load user's chats
           loadUserChats(isNewLogin);
@@ -213,6 +240,25 @@ const Home = () => {
         });
       });
   }, []);
+
+  // Initialize/cleanup socket when user state changes
+  useEffect(() => {
+    if (user && !socket) {
+      // User is logged in but no socket connection
+      initializeSocket();
+    } else if (!user && socket) {
+      // User logged out, disconnect socket
+      socket.disconnect();
+      setSocket(null);
+    }
+
+    // Cleanup function
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [user]);
 
   // Function to load user's existing chats
   const loadUserChats = async (isNewLogin = false) => {
@@ -287,9 +333,11 @@ const Home = () => {
       });
     }
 
-    socket.on("ai-response", handleAIResponse);
-    return () => socket.off("ai-response", handleAIResponse);
-  }, []);
+    if (socket) {
+      socket.on("ai-response", handleAIResponse);
+      return () => socket.off("ai-response", handleAIResponse);
+    }
+  }, [socket]);
 
   const updateChatTitle = (messages) => {
     const firstUserMessage = messages.find(m => m.sender === 'user');
@@ -356,7 +404,14 @@ const Home = () => {
       userName: user ? `${user.fullName?.firstName} ${user.fullName?.lastName}` : null
     };
     console.log('📤 Sending message to AI:', messageData);
-    socket.emit("ai-message", messageData);
+    
+    if (socket && socket.connected) {
+      socket.emit("ai-message", messageData);
+    } else {
+      console.error('❌ Socket not connected, cannot send message');
+      setIsAiThinking(false);
+      toast.error("Connection lost. Please refresh the page and login again.");
+    }
   };
 
   const handleTextareaInput = (e) => {
