@@ -21,45 +21,27 @@ function initSocketServer(httpServer) {
       const cookies = cookie.parse(socket.handshake.headers.cookie || "");
       const token = cookies.token;
 
-      if (!token) {
-        // Attach a flag for unauthenticated user
-        socket.isGuest = true;
-        return next();
-      }
+      if (!token) return next(new Error("Authentication error: No token provided"));
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await userModel.findById(decoded.id);
 
-      if (!user) {
-        socket.isGuest = true;
-        return next();
-      }
+      if (!user) return next(new Error("Authentication error: User not found"));
 
       socket.user = user; // attach user to socket
-      socket.isGuest = false;
       next();
     } catch (error) {
       console.error("Socket auth error:", error.message);
-      socket.isGuest = true;
-      next();
+      next(new Error("Authentication error: Invalid token"));
     }
   });
 
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.user ? socket.user._id : "guest");
+    console.log("User connected:", socket.user._id);
 
     // Handle user message -> AI response
     socket.on("ai-message", async (messagePayload) => {
-      // If not authenticated or no valid chat, send predefined message
-      if (socket.isGuest || !messagePayload.chat) {
-        socket.emit("ai-response", {
-          content: "👋 Namaste! Please login and create a new chat to use JEERAVAN AI.",
-          chat: messagePayload.chat || null
-        });
-        return;
-      }
       try {
-        // ...existing code...
         // Save user message & generate vector
         const [message, vectors] = await Promise.all([
           messageModel.create({
@@ -108,11 +90,11 @@ function initSocketServer(httpServer) {
         ];
 
         // Generate AI response with error handling
-        let response = "JEERAVAN AI service is currently unavailable. Please try again later.";
+        let response = "AI service is currently unavailable. Please try again later.";
         try {
           response = await aiService.generateResponse([...ltm, ...stm]);
         } catch (aiErr) {
-          console.error("JEERAVAN AI service error:", aiErr.message);
+          console.error("AI service error:", aiErr.message);
         }
 
         // Emit AI response to user
@@ -122,7 +104,7 @@ function initSocketServer(httpServer) {
         });
 
         // Save AI response & vector only if service worked
-        if (response !== "JEERAVAN AI service is currently unavailable. Please try again later.") {
+        if (response !== "AI service is currently unavailable. Please try again later.") {
           const responseVector = await aiService.generateVector(response);
           const responseMessage = await messageModel.create({
             chat: messagePayload.chat,
@@ -143,7 +125,7 @@ function initSocketServer(httpServer) {
         }
 
       } catch (err) {
-        console.error("Socket JEERAVAN AI handler failed:", err);
+        console.error("Socket AI handler failed:", err);
         socket.emit("ai-response", {
           content: "Something went wrong. Please try again later.",
           chat: messagePayload.chat
