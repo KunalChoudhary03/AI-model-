@@ -15,6 +15,7 @@ import "react-toastify/dist/ReactToastify.css";
 const Home = () => {
   const [socket, setSocket] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(() => {
     // Don't load user from localStorage initially - let useEffect handle it
     // This prevents showing wrong user data before server verification
@@ -314,6 +315,10 @@ const Home = () => {
         setBackendStatus('error');
         // Otherwise clear all user data
         clearUserData();
+      })
+      .finally(() => {
+        // Hide loading screen after authentication check is complete
+        setTimeout(() => setIsLoading(false), 1500); // Add a small delay for smooth transition
       });
   }, []);
 
@@ -667,7 +672,85 @@ const Home = () => {
   };
 
   return (
-    <div className="chat-container">
+    <>
+      {/* Beautiful Loading Screen */}
+      {isLoading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          color: 'white'
+        }}>
+          {/* Animated Jeeravan Logo */}
+          <div style={{
+            fontSize: '3.5rem',
+            fontWeight: '800',
+            marginBottom: '2rem',
+            background: 'linear-gradient(45deg, #8B4513, #D2691E, #CD853F, #8B4513)',
+            backgroundSize: '400% 400%',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            animation: 'shiny-glow 2s ease-in-out infinite, bounce 2s ease-in-out infinite',
+            textAlign: 'center'
+          }}>
+            Jeeravan 🌶️
+          </div>
+          
+          {/* Loading Spinner */}
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '4px solid rgba(139, 69, 19, 0.3)',
+            borderTop: '4px solid #8B4513',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '1.5rem'
+          }}></div>
+          
+          {/* Welcome Message */}
+          <div style={{
+            fontSize: '1.2rem',
+            textAlign: 'center',
+            opacity: 0.9,
+            animation: 'fadeIn 1.5s ease-in-out'
+          }}>
+            <div style={{ marginBottom: '0.5rem' }}>🚀 Indore ki dil se aur Malwa ka swaad!</div>
+            <div style={{ fontSize: '1rem', opacity: 0.7 }}>Loading your personalized chat experience...</div>
+          </div>
+          
+          {/* Add animations */}
+          <style>
+            {`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              
+              @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                40% { transform: translateY(-10px); }
+                60% { transform: translateY(-5px); }
+              }
+              
+              @keyframes fadeIn {
+                0% { opacity: 0; transform: translateY(20px); }
+                100% { opacity: 1; transform: translateY(0); }
+              }
+            `}
+          </style>
+        </div>
+      )}
+      
+      <div className="chat-container">
       <Sidebar
         previousChats={previousChats}
         handleSelectChat={handleSelectChat}
@@ -779,6 +862,7 @@ const Home = () => {
         <ToastContainer position="top-right" autoClose={2500} hideProgressBar theme="colored" />
       </main>
     </div>
+    </>
   );
 };
 

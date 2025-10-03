@@ -83,6 +83,25 @@ html, body {
   -ms-overflow-style: none; /* IE 10+ */
 }
 
+/* Mobile responsive messages */
+@media (max-width: 768px) {
+  .messages-container {
+    padding-bottom: 140px; /* More space on mobile */
+    padding-left: 8px;
+    padding-right: 8px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .messages-container {
+    padding-bottom: 160px; /* Even more space on small phones */
+    padding-left: 6px;
+    padding-right: 6px;
+    gap: 10px;
+  }
+}
+
 .messages-container::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
@@ -157,6 +176,45 @@ html, body {
 .bubble-content.message-user {
   background: linear-gradient(90deg, #4f46e5 0%, #19c37d 100%);
   color: #fff;
+}
+
+/* Mobile responsive message bubbles */
+@media (max-width: 768px) {
+  .message-bubble {
+    padding: 6px 0;
+    margin-bottom: 0;
+  }
+  
+  .bubble-content {
+    max-width: 85%;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .message-user .bubble-content {
+    margin-left: auto;
+    margin-right: 0;
+  }
+  
+  .message-ai .bubble-content {
+    margin-left: 0;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .bubble-content {
+    max-width: 90%;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  .bubble-row {
+    gap: 6px;
+  }
 }
 
 .avatar {
@@ -471,6 +529,7 @@ html, body {
     right: 0;
     background-color: var(--chat-background);
     z-index: 10;
+    padding-bottom: 8px;
   }
 }
 
@@ -479,6 +538,15 @@ html, body {
   .chat-sidebar {
     max-width: 280px;
   }
+  
+  .chat-input-container {
+    padding: 12px 8px 12px 8px;
+  }
+  
+  .chat-input-form {
+    margin: 0 4px;
+  }
+}
   
   .message {
     max-width: 95%;
@@ -810,6 +878,31 @@ html, body {
   animation: shiny-glow 3s ease-in-out infinite;
   text-shadow: 0 0 10px rgba(139, 69, 19, 0.5), 0 0 20px rgba(210, 105, 30, 0.3);
   filter: drop-shadow(0 2px 4px rgba(139, 69, 19, 0.4));
+}
+
+/* Mobile responsive heading */
+@media (max-width: 768px) {
+  .shiny-header-bg {
+    padding: 20px 0 16px 0;
+  }
+  
+  .shiny-header-text {
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+    margin: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shiny-header-bg {
+    padding: 16px 0 12px 0;
+  }
+  
+  .shiny-header-text {
+    font-size: 1.5rem;
+    letter-spacing: 0.5px;
+    margin: 0 5px;
+  }
 }
 
 @keyframes shiny-glow {
