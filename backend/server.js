@@ -8,8 +8,10 @@ const httpServer = require('http').createServer(app);
 connectDb();
 initSocketServer(httpServer);
 
-httpServer.listen(3000, async () => {
-    console.log('Server is running on port 3000');
+const PORT = process.env.PORT || 3000;
+
+httpServer.listen(PORT, async () => {
+    console.log(`Server is running on port ${PORT}`);
     
     // Test AI service on startup
     console.log('Testing AI service...');
