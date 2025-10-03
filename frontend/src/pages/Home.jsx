@@ -14,6 +14,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 const Home = () => {
   const [socket, setSocket] = useState(null);
+  const [socketConnected, setSocketConnected] = useState(false);
   const [user, setUser] = useState(() => {
     // Don't load user from localStorage initially - let useEffect handle it
     // This prevents showing wrong user data before server verification
@@ -179,30 +180,58 @@ const Home = () => {
     const newSocket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:3000", { 
       withCredentials: true,
       transports: ['websocket', 'polling'],
-      autoConnect: false // Don't auto-connect
+      autoConnect: false, // Don't auto-connect
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 20000
     });
 
     // Add socket connection debugging
     newSocket.on('connect', () => {
       console.log('✅ Socket connected to backend');
+      setSocketConnected(true);
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('❌ Socket disconnected from backend');
+    newSocket.on('disconnect', (reason) => {
+      console.log('❌ Socket disconnected from backend:', reason);
+      setSocketConnected(false);
+      if (reason === 'io server disconnect' || reason === 'transport close') {
+        // Server initiated disconnect or connection lost
+        console.log('🔄 Attempting to reconnect socket...');
+        setTimeout(() => {
+          if (user && newSocket) {
+            newSocket.connect();
+          }
+        }, 2000);
+      }
     });
 
     newSocket.on('connect_error', (error) => {
       console.error('🔌 Socket connection error:', error);
+      setSocketConnected(false);
       if (error.message.includes('Authentication error')) {
         console.log('🔐 Authentication required for socket connection');
-        toast.warning("Please login to enable real-time chat");
+        toast.warning("Session expired. Please refresh and login again.");
       }
+    });
+
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log(`🔄 Socket reconnected after ${attemptNumber} attempts`);
+      setSocketConnected(true);
+      toast.success("Connection restored!");
+    });
+
+    newSocket.on('reconnect_error', (error) => {
+      console.error('🔄 Socket reconnection failed:', error);
+      setSocketConnected(false);
     });
 
     setSocket(newSocket);
     
     // Only connect if we have a user
     if (user) {
+      console.log('🔌 Connecting socket for user:', user.email);
       newSocket.connect();
     }
     
@@ -460,8 +489,28 @@ const Home = () => {
       socket.emit("ai-message", messageData);
     } else {
       console.error('❌ Socket not connected, cannot send message');
-      setIsAiThinking(false);
-      toast.error("Connection lost. Please refresh the page and login again.");
+      console.log('🔄 Attempting to reconnect socket...');
+      
+      // Try to reconnect socket first
+      if (socket && !socket.connected) {
+        socket.connect();
+        
+        // Wait a moment and try again
+        setTimeout(() => {
+          if (socket && socket.connected) {
+            console.log('🔄 Socket reconnected, retrying message...');
+            socket.emit("ai-message", messageData);
+          } else {
+            setIsAiThinking(false);
+            toast.error("Connection lost. Please try sending the message again.");
+          }
+        }, 2000);
+      } else {
+        // No socket at all, need to reinitialize
+        initializeSocket();
+        setIsAiThinking(false);
+        toast.error("Connection lost. Please try sending the message again.");
+      }
     }
   };
 
@@ -689,6 +738,26 @@ const Home = () => {
             margin: '10px'
           }}>
             🔍 Checking server status...
+          </div>
+        )}
+        
+        {/* Socket Connection Status */}
+        {user && !socketConnected && (
+          <div style={{
+            background: 'linear-gradient(45deg, #ff9800, #f57c00)',
+            color: 'white',
+            padding: '6px 12px',
+            textAlign: 'center',
+            fontSize: '13px',
+            borderRadius: '6px',
+            margin: '5px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}>
+            <span>🔌 Chat connection offline</span>
+            <span style={{ fontSize: '11px' }}>• Messages will retry automatically</span>
           </div>
         )}
         
