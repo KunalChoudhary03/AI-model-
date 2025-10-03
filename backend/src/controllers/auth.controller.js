@@ -55,5 +55,63 @@ async function loginUser(req,res) {
     })
 }
 
+async function getProfile(req,res) {
+    const user = req.user;
+    res.status(200).json({
+        user:{
+           email:user.email,
+           _id: user._id,
+           fullName: user.fullName
+         }
+    })
+}
 
-module.exports = {registerUser, loginUser}
+async function logoutUser(req,res) {
+    res.clearCookie('token');
+    res.status(200).json({
+        message: "Logged out successfully"
+    })
+}
+
+async function deleteAccount(req, res) {
+    try {
+        const userId = req.user._id;
+
+        // Delete user's chats and messages
+        const Chat = require('../models/chat.model');
+        const Message = require('../models/message.model');
+        const { deleteUserFromPinecone } = require('../services/vector.service');
+        
+        // Find all user's chats
+        const userChats = await Chat.find({ user: userId });
+        const chatIds = userChats.map(chat => chat._id);
+        
+        // Delete all messages from user's chats
+        await Message.deleteMany({ chat: { $in: chatIds } });
+        
+        // Delete all user's chats
+        await Chat.deleteMany({ user: userId });
+        
+        // Delete user data from Pinecone database
+        await deleteUserFromPinecone(userId);
+        
+        // Delete the user
+        const User = require('../models/user.model');
+        await User.findByIdAndDelete(userId);
+        
+        // Clear the authentication cookie
+        res.clearCookie('token');
+        
+        res.status(200).json({
+            message: "Account deleted successfully"
+        });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({
+            message: "Error deleting account",
+            error: error.message
+        });
+    }
+}
+
+module.exports = {registerUser, loginUser, getProfile, logoutUser, deleteAccount}

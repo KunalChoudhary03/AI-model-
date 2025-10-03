@@ -64,7 +64,11 @@ const Register = () => {
     );
 
     console.log("Register success:", res.data);
-    navigate("/login"); // ✅ redirect to login after success
+    // Store user data in localStorage
+    if (res.data && res.data.user) {
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+    }
+    navigate("/"); // ✅ redirect to home after success
   } catch (err) {
     if (err.response) {
       console.error("Register error (server):", err.response.data);

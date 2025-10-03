@@ -1,11 +1,11 @@
 import React, { useRef, useEffect } from "react";
 
-const ChatMessages = ({ messages }) => {
+const ChatMessages = ({ messages, isAiThinking }) => {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isAiThinking]);
 
   return (
     <div className="chat-messages">
@@ -29,6 +29,26 @@ const ChatMessages = ({ messages }) => {
             </div>
           </div>
         ))}
+        
+        {/* AI Thinking Indicator */}
+        {isAiThinking && (
+          <div className="message-bubble message-ai">
+            <div className="bubble-row">
+              <div className="avatar ai-avatar">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#10a37f"/><text x="16" y="21" textAnchor="middle" fontSize="16" fill="#fff">🤖</text></svg>
+              </div>
+              <div className="bubble-content thinking-indicator">
+                <div className="thinking-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span className="thinking-text">AI is thinking...</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
     </div>

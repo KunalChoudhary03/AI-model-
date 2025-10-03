@@ -12,6 +12,8 @@ const Login = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loginError, setLoginError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -31,38 +33,74 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    axios.post("http://localhost:3000/api/auth/login", 
-      {
-        email: formData.email,
-        password: formData.password
-      },
-      {
-        withCredentials: true   // ✅ fixed typo
-      }
-    )
-    .then((res) => {
+    setIsLoading(true);
+    setLoginError('');
+
+    try {
+      const res = await axios.post("http://localhost:3000/api/auth/login", 
+        {
+          email: formData.email,
+          password: formData.password
+        },
+        {
+          withCredentials: true
+        }
+      );
+      
       console.log(res);
+      // Store user data in localStorage
+      if (res.data && res.data.user) {
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+      }
       navigate('/');
-    })
-    .catch((err) => {
+    } catch (err) {
       console.log(err);
-    })
-    .finally(() => {
-      console.log("Login attempt finished");
-    });
+      if (err.response) {
+        if (err.response.status === 404) {
+          setLoginError('User not found. Please check your email or create an account.');
+        } else if (err.response.status === 401) {
+          setLoginError('Invalid password. Please try again.');
+        } else {
+          setLoginError('Login failed. Please try again.');
+        }
+      } else {
+        setLoginError('Network error. Please check your connection.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target; // ✅ fixed
+    const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value
     }));
+    
+    // Clear errors when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+    
+    // Clear login error when user starts typing
+    if (loginError) {
+      setLoginError('');
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit(e);
+    }
   };
 
   return (
@@ -71,6 +109,21 @@ const Login = () => {
       <ThemeToggle />
       <div className="auth-form-container">
         <h1 className="auth-title">Welcome Back</h1>
+        
+        {loginError && (
+          <div className="login-error" style={{
+            background: '#fee2e2',
+            color: '#dc2626',
+            padding: '12px',
+            borderRadius: '8px',
+            marginBottom: '1rem',
+            border: '1px solid #fecaca',
+            fontSize: '0.9rem'
+          }}>
+            {loginError}
+          </div>
+        )}
+        
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email" className="form-label">Email address</label>
@@ -80,7 +133,9 @@ const Login = () => {
               type="email"
               className="form-input"
               placeholder="Enter your email"
+              value={formData.email}
               onChange={handleChange}
+              onKeyPress={handleKeyPress}
             />
             {errors.email && <span className="error-text">{errors.email}</span>}
           </div>
@@ -93,13 +148,15 @@ const Login = () => {
               type="password"
               className="form-input"
               placeholder="Enter your password"
+              value={formData.password}
               onChange={handleChange}
+              onKeyPress={handleKeyPress}
             />
             {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
 
-          <button type="submit" className="auth-button">
-            Sign in
+          <button type="submit" className="auth-button" disabled={isLoading}>
+            {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 

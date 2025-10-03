@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
@@ -15,32 +16,21 @@ import "react-toastify/dist/ReactToastify.css";
 const socket = io("http://localhost:3000", { withCredentials: true });
 
 const Home = () => {
-  const [user, setUser] = useState(() => {
-    // Load user from localStorage on initial load
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-  const [currentChat, setCurrentChat] = useState(() => {
-    // Load current chat from localStorage on initial load
-    const savedCurrentChat = localStorage.getItem('currentChat');
-    return savedCurrentChat ? JSON.parse(savedCurrentChat) : {
-      messages: [{ 
-        id: 1, 
-        text: "Bhiya Ram! Main aapka Jeeravan hun 🌶️ - Indore ki dil se aur Malwa ka swaad liye hue! Koi bhi sawal poocho, main hazir hun madad karne ke liye!", 
-        sender: "ai" 
-      }],
-    };
+  const [user, setUser] = useState(null);
+  const [currentChat, setCurrentChat] = useState({
+    messages: [{ 
+      id: 1, 
+      text: "Bhiya Ram! Main aapka Jeeravan hun 🌶️ - Indore ki dil se aur Malwa ka swaad liye hue! Koi bhi sawal poocho, main hazir hun madad karne ke liye!", 
+      sender: "ai" 
+    }],
   });
   const [inputMessage, setInputMessage] = useState("");
-  const [previousChats, setPreviousChats] = useState(() => {
-    // Load previous chats from localStorage on initial load
-    const savedChats = localStorage.getItem('previousChats');
-    return savedChats ? JSON.parse(savedChats) : [];
-  });
+  const [previousChats, setPreviousChats] = useState([
+    // Start with no chat, force user to create a new chat to get a valid ObjectId from backend
+  ]);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
   const [isAiThinking, setIsAiThinking] = useState(false);
-  const [isFirstLogin, setIsFirstLogin] = useState(false);
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
 
@@ -51,50 +41,6 @@ const Home = () => {
   useEffect(() => {
     scrollToBottom();
   }, [currentChat.messages]);
-
-  // Save currentChat to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('currentChat', JSON.stringify(currentChat));
-  }, [currentChat]);
-
-  // Save previousChats to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('previousChats', JSON.stringify(previousChats));
-  }, [previousChats]);
-
-  // Auto-create first chat on login
-  const createFirstChat = async () => {
-    try {
-      const response = await fetch("http://localhost:3000/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ title: "Welcome Chat" }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          const newChat = {
-            id: data.chat._id,
-            title: "Welcome Chat",
-            messages: [{ 
-              id: 1, 
-              text: "Bhiya Ram! Main aapka Jeeravan hun 🌶️ - Indore ki dil se aur Malwa ka swaad liye hue! Koi bhi sawal poocho, main hazir hun madad karne ke liye!", 
-              sender: "ai" 
-            }],
-            active: true,
-          };
-          
-          setPreviousChats([newChat]);
-          setCurrentChat({ messages: newChat.messages });
-          toast.success("Welcome! Your first chat has been created automatically!");
-        }
-      }
-    } catch (error) {
-      console.log("Failed to create first chat:", error);
-    }
-  };
 
   // Fetch user profile on mount
   useEffect(() => {
@@ -122,75 +68,23 @@ const Home = () => {
       })
       .then((data) => {
         if (data.success) {
-          const isNewLogin = !user && data.user; // User wasn't loaded before but now is
           setUser(data.user);
+          // Update localStorage with fresh data
           localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // Load user's chats
-          loadUserChats(isNewLogin);
         }
       })
       .catch((err) => {
         console.log("User not logged in or profile fetch failed:", err);
+        // Clear localStorage if fetch fails
         localStorage.removeItem('user');
-        // Clear all chat data if user is not logged in
-        localStorage.removeItem('currentChat');
-        localStorage.removeItem('previousChats');
         setUser(null);
-        setPreviousChats([]);
-        setCurrentChat({
-          messages: [{ 
-            id: 1, 
-            text: "Bhiya Ram! Main aapka Jeeravan hun 🌶️ - Indore ki dil se aur Malwa ka swaad liye hue! Koi bhi sawal poocho, main hazir hun madad karne ke liye!", 
-            sender: "ai" 
-          }],
-        });
       });
   }, []);
-
-  // Function to load user's existing chats
-  const loadUserChats = async (isNewLogin = false) => {
-    try {
-      const response = await fetch("http://localhost:3000/api/chat", {
-        method: "GET",
-        credentials: "include",
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.chats && data.chats.length > 0) {
-          // Set chats with first one active
-          const chatsWithActiveFlag = data.chats.map((chat, index) => ({
-            ...chat,
-            active: index === 0
-          }));
-          
-          setPreviousChats(chatsWithActiveFlag);
-          // Set current chat to first chat
-          if (chatsWithActiveFlag[0].messages.length > 0) {
-            setCurrentChat({ messages: chatsWithActiveFlag[0].messages });
-          }
-        } else if (isNewLogin) {
-          // No chats exist and user just logged in - create first chat automatically
-          createFirstChat();
-        }
-      } else if (isNewLogin) {
-        // API call failed but user just logged in - create first chat
-        createFirstChat();
-      }
-    } catch (error) {
-      console.log("Failed to load user chats:", error);
-      if (isNewLogin) {
-        // Create first chat even if loading fails
-        createFirstChat();
-      }
-    }
-  };
 
   // Listen for AI response from backend
   useEffect(() => {
     function handleAIResponse({ content, chat }) {
-      setIsAiThinking(false);
+      setIsAiThinking(false); // Stop thinking indicator
       setPreviousChats(prev => {
         let updatedCurrentChat = null;
         const updatedChats = prev.map(c => {
@@ -208,14 +102,9 @@ const Home = () => {
           }
           return c;
         });
-        
-        // Save to localStorage when AI response comes
         if (updatedCurrentChat) {
           setCurrentChat({ messages: updatedCurrentChat.messages });
-          localStorage.setItem('currentChat', JSON.stringify({ messages: updatedCurrentChat.messages }));
         }
-        localStorage.setItem('previousChats', JSON.stringify(updatedChats));
-        
         return updatedChats;
       });
     }
@@ -240,21 +129,6 @@ const Home = () => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
 
-    // Check if user is logged in
-    if (!user) {
-      toast.error("Please login first to send messages!");
-      navigate('/login');
-      return;
-    }
-
-    // Check if there's an active chat
-    const activeChat = previousChats.find(chat => chat.active);
-    if (!activeChat) {
-      toast.error("Please create a chat first!");
-      setShowNameModal(true);
-      return;
-    }
-
     const newMessage = {
       id: currentChat.messages.length + 1,
       text: inputMessage,
@@ -262,32 +136,31 @@ const Home = () => {
     };
     const updatedMessages = [...currentChat.messages, newMessage];
     setCurrentChat((prev) => ({ ...prev, messages: updatedMessages }));
-    
-    const updatedChats = previousChats.map((chat) => 
-      chat.active 
-        ? { ...chat, messages: updatedMessages } 
-        : chat
+    setPreviousChats((prev) =>
+      prev.map((chat) => 
+        chat.active 
+          ? { ...chat, messages: updatedMessages } 
+          : chat
+      )
     );
-    setPreviousChats(updatedChats);
-    
-    // Save to localStorage immediately
-    localStorage.setItem('currentChat', JSON.stringify({ messages: updatedMessages }));
-    localStorage.setItem('previousChats', JSON.stringify(updatedChats));
-    
-    // Update chat title if it's the first user message
     if (currentChat.messages.length === 1) {
       updateChatTitle(updatedMessages);
     }
-    
     setInputMessage("");
+
+    // Set thinking indicator
     setIsAiThinking(true);
 
     // Send message to backend via socket
-    socket.emit("ai-message", {
-      chat: activeChat.id,
-      content: newMessage.text,
-      userName: user ? `${user.fullName?.firstName} ${user.fullName?.lastName}` : null
-    });
+    // Find active chat id
+    const activeChat = previousChats.find(chat => chat.active);
+    if (activeChat) {
+      socket.emit("ai-message", {
+        chat: activeChat.id,
+        content: newMessage.text,
+        userName: user ? `${user.fullName?.firstName} ${user.fullName?.lastName}` : null
+      });
+    }
   };
 
   const handleTextareaInput = (e) => {
@@ -296,11 +169,6 @@ const Home = () => {
   };
 
   const handleNewChat = () => {
-    if (!user) {
-      toast.error("Please login first to create a chat!");
-      navigate('/login');
-      return;
-    }
     setShowNameModal(true);
   };
 
@@ -308,24 +176,13 @@ const Home = () => {
     setShowNameModal(false);
     if (!chatName.trim()) return toast.error("Chat name cannot be empty!");
 
-    if (!user) {
-      toast.error("Please login first to create a chat!");
-      navigate('/login');
-      return;
-    }
-
-    fetch("http://localhost:3000/api/chat", {
+    fetch("http://localhost:3000/api/chats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ title: chatName }),
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
+      .then((response) => response.json())
       .then((data) => {
         if (data.success) {
           // Deactivate all previous chats
@@ -346,41 +203,23 @@ const Home = () => {
           setPreviousChats(prev => [...prev, newChat]);
           setCurrentChat({ messages: newChat.messages });
           setShowSidebar(false);
-          
-          // Save to localStorage immediately
-          const updatedChats = [...previousChats.map(chat => ({ ...chat, active: false })), newChat];
-          localStorage.setItem('previousChats', JSON.stringify(updatedChats));
-          localStorage.setItem('currentChat', JSON.stringify({ messages: newChat.messages }));
-          
-          toast.success("New chat created successfully!");
         } else {
           toast.error(data.message || "Failed to create chat");
         }
       })
-      .catch((error) => {
-        console.error('Chat creation error:', error);
-        if (error.message.includes('401')) {
-          toast.error("Please login first to create a chat!");
-          navigate('/login');
-        } else {
-          toast.error("Network error while creating chat");
-        }
-      });
+      .catch(() => toast.error("Network error"));
   };
 
   const handleSelectChat = (selectedChat) => {
-    const updatedChats = previousChats.map(chat => ({ 
-      ...chat, 
-      active: chat.id === selectedChat.id 
-    }));
-    
-    setPreviousChats(updatedChats);
+    // Deactivate all chats and activate selected one
+    setPreviousChats(prev => 
+      prev.map(chat => ({ 
+        ...chat, 
+        active: chat.id === selectedChat.id 
+      }))
+    );
     setCurrentChat({ messages: selectedChat.messages });
     setShowSidebar(false);
-    
-    // Save to localStorage
-    localStorage.setItem('previousChats', JSON.stringify(updatedChats));
-    localStorage.setItem('currentChat', JSON.stringify({ messages: selectedChat.messages }));
   };
 
   const handleDeleteChat = (chatId, e) => {
@@ -389,21 +228,25 @@ const Home = () => {
     const chatToDelete = previousChats.find(chat => chat.id === chatId);
     if (!chatToDelete) return;
 
-    fetch(`http://localhost:3000/api/chat/${chatId}`, {
+    fetch(`http://localhost:3000/api/chats/${chatId}`, {
       method: "DELETE",
       credentials: "include",
     })
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
+          // Remove chat from state
           setPreviousChats(prev => {
             const remainingChats = prev.filter(chat => chat.id !== chatId);
             
+            // If deleted chat was active, activate another chat or reset
             if (chatToDelete.active) {
               if (remainingChats.length > 0) {
+                // Activate the first remaining chat
                 remainingChats[0].active = true;
                 setCurrentChat({ messages: remainingChats[0].messages });
               } else {
+                // No chats left, reset to default
                 setCurrentChat({
                   messages: [{ 
                     id: 1, 
@@ -460,6 +303,154 @@ const Home = () => {
           messages={getVisibleMessages(currentChat.messages)} 
           isAiThinking={isAiThinking}
         />
+        <ChatInputBar
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSubmit={handleSubmit}
+          handleTextareaInput={handleTextareaInput}
+        />
+        <NamePromptModal
+          isOpen={showNameModal}
+          onClose={() => setShowNameModal(false)}
+          onSubmit={handleNameSubmit}
+        />
+        <ToastContainer position="top-right" autoClose={2500} hideProgressBar theme="colored" />
+      </main>
+    </div>
+  );
+};
+
+export default Home;
+    // Create chat on backend to get valid ObjectId
+    fetch("http://localhost:3000/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({ title: chatName })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.chat && data.chat._id) {
+          const initialMessage = { id: 1, text: "Hello! How can I help you today?", sender: "ai" };
+          const newChat = {
+            id: data.chat._id,
+            title: chatName,
+            messages: [initialMessage],
+            active: true,
+          };
+          setPreviousChats(prev => [newChat, ...prev.map(chat => ({ ...chat, active: false }))]);
+          setCurrentChat({ messages: [initialMessage] });
+          setShowSidebar(false);
+          toast.success(`New chat '${chatName}' created!`);
+        } else {
+          toast.error("Failed to create chat!");
+        }
+      })
+      .catch(() => toast.error("Failed to create chat!"));
+  };
+
+  const handleSelectChat = (selectedChat) => {
+    setPreviousChats((prev) =>
+      prev.map((chat) => ({ ...chat, active: chat.id === selectedChat.id }))
+    );
+    setCurrentChat(selectedChat);
+    setShowSidebar(false);
+  };
+
+  const handleDeleteChat = (chatId, e) => {
+    e.stopPropagation();
+    setPreviousChats(prev => {
+      const updatedChats = prev.filter(chat => chat.id !== chatId);
+      if (prev.find(chat => chat.id === chatId)?.active) {
+        if (updatedChats.length > 0) {
+          updatedChats[0].active = true;
+          setCurrentChat(updatedChats[0]);
+        } else {
+          const initialMessage = { id: 1, text: "Hello! How can I help you today?", sender: "ai" };
+          const newChat = {
+            id: Date.now().toString(),
+            title: "New Chat",
+            messages: [initialMessage],
+            active: true
+          };
+          updatedChats.push(newChat);
+          setCurrentChat({ messages: [initialMessage] });
+        }
+      }
+      return updatedChats;
+    });
+    toast.info("Chat deleted!");
+  };
+
+
+  // Listen for AI response from backend
+  useEffect(() => {
+    function handleAIResponse({ content, chat }) {
+      setPreviousChats(prev => {
+        let updatedCurrentChat = null;
+        const updatedChats = prev.map(c => {
+          if (c.id === chat) {
+            const aiMessage = {
+              id: c.messages.length + 1,
+              text: content,
+              sender: "ai"
+            };
+            const updatedMessages = [...c.messages, aiMessage];
+            if (c.active) {
+              updatedCurrentChat = { ...c, messages: updatedMessages };
+            }
+            return { ...c, messages: updatedMessages };
+          }
+          return c;
+        });
+        if (updatedCurrentChat) {
+          setCurrentChat({ messages: updatedCurrentChat.messages });
+        }
+        return updatedChats;
+      });
+    }
+    socket.on("ai-response", handleAIResponse);
+    return () => {
+      socket.off("ai-response", handleAIResponse);
+    };
+  }, []);
+
+  const MAX_VISIBLE_MESSAGES = 30;
+  function getVisibleMessages(messages) {
+    if (messages.length > MAX_VISIBLE_MESSAGES) {
+      return messages.slice(-MAX_VISIBLE_MESSAGES);
+    }
+    return messages;
+  }
+
+  return (
+    <div className="chat-container">
+      <Sidebar
+        previousChats={previousChats}
+        handleSelectChat={handleSelectChat}
+        handleDeleteChat={handleDeleteChat}
+        handleNewChat={handleNewChat}
+        showSidebar={showSidebar}
+      />
+      {showSidebar && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setShowSidebar(false)}
+          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9, background: 'rgba(0,0,0,0.2)' }}
+        />
+      )}
+      <main className="chat-main">
+        <div className="shiny-header-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span className="shiny-header-text">ChatGPT</span>
+        </div>
+        <ChatHeader
+          setShowSidebar={setShowSidebar}
+          showProfile={true}
+          onProfileClick={() => navigate('/register')}
+        />
+        <ChatMessages messages={getVisibleMessages(currentChat.messages)} />
         <ChatInputBar
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}

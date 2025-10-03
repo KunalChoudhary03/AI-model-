@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import AppRoutes from './AppRoutes';
 import './styles/theme.css';
 import './styles/chat.css';
+import './styles/thinking-indicator.css';
 
 const App = () => {
   useEffect(() => {
