@@ -12,7 +12,7 @@ import NamePromptModal from "../components/NamePromptModal";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const socket = io("http://localhost:3000", { withCredentials: true });
+const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:3000", { withCredentials: true });
 
 const Home = () => {
   const [user, setUser] = useState(() => {
@@ -65,7 +65,7 @@ const Home = () => {
   // Auto-create first chat on login
   const createFirstChat = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/chat", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -110,7 +110,7 @@ const Home = () => {
     }
 
     // Then fetch fresh user data from server
-    fetch("http://localhost:3000/api/auth/profile", {
+    fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/auth/profile`, {
       method: "GET",
       credentials: "include",
     })
@@ -151,7 +151,7 @@ const Home = () => {
   // Function to load user's existing chats
   const loadUserChats = async (isNewLogin = false) => {
     try {
-      const response = await fetch("http://localhost:3000/api/chat", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/chat`, {
         method: "GET",
         credentials: "include",
       });
@@ -314,7 +314,7 @@ const Home = () => {
       return;
     }
 
-    fetch("http://localhost:3000/api/chat", {
+    fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -389,7 +389,7 @@ const Home = () => {
     const chatToDelete = previousChats.find(chat => chat.id === chatId);
     if (!chatToDelete) return;
 
-    fetch(`http://localhost:3000/api/chat/${chatId}`, {
+    fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/chat/${chatId}`, {
       method: "DELETE",
       credentials: "include",
     })
