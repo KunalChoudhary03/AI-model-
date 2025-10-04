@@ -771,7 +771,7 @@ const Home = () => {
           <span className="shiny-header-text">Jeeravan</span>
         </div>
         <ChatHeader
-          setShowSidebar={setShowSidebar}
+          onMenuClick={setShowSidebar}
           showProfile={true}
           user={user}
           onProfileClick={() => navigate('/login')}

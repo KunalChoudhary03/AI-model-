@@ -672,6 +672,8 @@
   .mobile-only {
     display: flex !important;
     align-items: center !important;
+    flex-shrink: 0 !important;
+    margin-right: 8px !important;
   }
   
   .desktop-only {

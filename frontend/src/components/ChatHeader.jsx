@@ -7,6 +7,10 @@ const ChatHeader = ({ onMenuClick, onProfileClick, userName = "User", user }) =>
 
   // Extract user name from user object or use default
   const displayName = user?.name || userName || "User";
+  
+  // Debug logging
+  console.log("ChatHeader - user:", user);
+  console.log("ChatHeader - displayName:", displayName);
 
   const handleProfileClick = () => {
     if (onProfileClick) {
