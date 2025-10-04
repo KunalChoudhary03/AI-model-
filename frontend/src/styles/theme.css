@@ -481,12 +481,17 @@
   flex: 0 0 auto;
 }
 
+/* CSS Version 2.1 - Mobile Layout Fix */
 .mobile-only {
   display: none !important;
+  /* Mobile cache buster */
+  content: "v2.1";
 }
 
 .desktop-only {
   display: flex !important;
+  /* Desktop cache buster */  
+  content: "v2.1";
 }
 
 /* Debug mobile layout */
@@ -624,20 +629,26 @@
   height: 1.5rem;
 }
 
-/* Mobile responsive styles */
+/* Mobile responsive styles - v2.0 Force Cache Refresh */
 @media (max-width: 768px) {
   .chat-header {
     padding: 0.75rem 1rem;
     gap: 0.5rem;
     min-height: 55px;
+    /* Force layout refresh */
+    transform: translateZ(0);
   }
   
   .mobile-only {
     display: flex !important;
+    /* Cache buster */
+    opacity: 1;
   }
   
   .desktop-only {
     display: none !important;
+    /* Cache buster */
+    visibility: hidden;
   }
   
   .chat-title {
