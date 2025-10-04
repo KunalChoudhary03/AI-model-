@@ -1,53 +1,48 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import ThemeToggle from './ThemeToggle';
+import React, { useState, useEffect } from "react";
+import ThemeToggle from "./ThemeToggle";
 
-const ChatHeader = ({ onMenuClick, onProfileClick, userName = "User", user }) => {
-  const navigate = useNavigate();
+const ChatHeader = ({ setShowSidebar, showProfile, onProfileClick, title }) => {
+  const [user, setUser] = useState(null);
 
-  // Extract user name from user object or use default
-  const displayName = user?.name || userName || "User";
-  
-  // Debug logging
-  console.log("ChatHeader - user:", user);
-  console.log("ChatHeader - displayName:", displayName);
-
-  const handleProfileClick = () => {
-    if (onProfileClick) {
-      onProfileClick();
+  useEffect(() => {
+    // Get user data from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
     }
-  };
+  }, []);
 
   return (
     <div className="chat-header">
-      {/* Left: Hamburger Menu */}
-      <div className="chat-header-left">
-        <button className="menu-button" onClick={onMenuClick}>
-          <svg className="menu-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-          </svg>
-        </button>
-      </div>
-
-      {/* Center: JEERAVAN Title */}
-      <h1 className="chat-title">JEERAVAN</h1>
-
-      {/* Right: Theme Toggle + Profile */}
+      <button
+        className="menu-button"
+        onClick={() => setShowSidebar && setShowSidebar((prev) => !prev)}
+        aria-label="Toggle sidebar"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="menu-icon">
+          <path fillRule="evenodd" d="M3 6.75A.75.75 0 013.75 6h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 6.75zM3 12a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 12zm0 5.25a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+        </svg>
+      </button>
+      
+      <h2 className="chat-title">{title || "Jeeravan AI"}</h2>
+      
       <div className="chat-header-right">
-        <div className="mobile-only">
-          <ThemeToggle />
-        </div>
-        
-        <button className="profile-button" onClick={handleProfileClick}>
-          <div className="user-profile-content">
-            <span className="user-icon">👤</span>
-            <span className="user-name-text desktop-only">{displayName}</span>
-          </div>
-        </button>
-        
-        <div className="desktop-only">
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
+        {showProfile && (
+          <button className="profile-button" aria-label="Profile" onClick={onProfileClick}>
+            <div className="user-profile-content">
+              <span className="user-icon">👤</span>
+              <span className="user-name-text desktop-only">
+                {user?.name || user?.username || "User"}
+              </span>
+            </div>
+          </button>
+        )}
       </div>
     </div>
   );

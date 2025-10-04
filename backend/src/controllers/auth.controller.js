@@ -18,13 +18,7 @@ async function registerUser(req,res) {
     })
     const token = jwt.sign({id:user._id},process.env.JWT_SECRET)
 
-    // Set cookie with proper attributes for production
-    res.cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    })
+    res.cookie('token',token)
     res.status(201).json({
         message: "User registered sucessfully",
         user:{
@@ -50,13 +44,7 @@ async function loginUser(req,res) {
     }
     const token = jwt.sign({id:user._id},process.env.JWT_SECRET);
 
-    // Set cookie with proper attributes for production
-    res.cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    })
+    res.cookie("token",token);
     res.status(200).json({
         message:"User Logged in successfully",
         user:{
@@ -67,69 +55,5 @@ async function loginUser(req,res) {
     })
 }
 
-async function getProfile(req,res) {
-    const user = req.user;
-    res.status(200).json({
-        success: true,
-        user:{
-           email:user.email,
-           _id: user._id,
-           fullName: user.fullName
-         }
-    })
-}
 
-async function logoutUser(req,res) {
-    // Clear cookie with same attributes used when setting it
-    res.clearCookie('token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-    });
-    res.status(200).json({
-        message: "Logged out successfully"
-    })
-}
-
-async function deleteAccount(req, res) {
-    try {
-        const userId = req.user._id;
-
-        // Delete user's chats and messages
-        const Chat = require('../models/chat.model');
-        const Message = require('../models/message.model');
-        const { deleteUserFromPinecone } = require('../services/vector.service');
-        
-        // Find all user's chats
-        const userChats = await Chat.find({ user: userId });
-        const chatIds = userChats.map(chat => chat._id);
-        
-        // Delete all messages from user's chats
-        await Message.deleteMany({ chat: { $in: chatIds } });
-        
-        // Delete all user's chats
-        await Chat.deleteMany({ user: userId });
-        
-        // Delete user data from Pinecone database
-        await deleteUserFromPinecone(userId);
-        
-        // Delete the user
-        const User = require('../models/user.model');
-        await User.findByIdAndDelete(userId);
-        
-        // Clear the authentication cookie
-        res.clearCookie('token');
-        
-        res.status(200).json({
-            message: "Account deleted successfully"
-        });
-    } catch (error) {
-        console.error('Delete account error:', error);
-        res.status(500).json({
-            message: "Error deleting account",
-            error: error.message
-        });
-    }
-}
-
-module.exports = {registerUser, loginUser, getProfile, logoutUser, deleteAccount}
+module.exports = {registerUser, loginUser}

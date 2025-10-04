@@ -9,12 +9,7 @@ const { createMemory, queryMemory } = require("../services/vector.service");
 function initSocketServer(httpServer) {
   const io = new Server(httpServer, {
     cors: {
-      origin: [
-        "http://localhost:5173",
-        "https://jeeravan.vercel.app",
-        "https://jeeravan-git-main-kunalchoudhary03s-projects.vercel.app",
-        "https://jeeravan-kunalchoudhary03s-projects.vercel.app"
-      ], // frontend URLs
+      origin: "http://localhost:5173", // frontend URL
       methods: ["GET", "POST"],
       credentials: true
     }
@@ -89,30 +84,17 @@ function initSocketServer(httpServer) {
           {
             role: "user",
             parts: [{
-              text: `User's name: ${socket.user.fullName?.firstName || 'User'}\nRelevant previous messages:\n${memory.map(item => item.metadata.text).join("\n")}`
+              text: `Relevant previous messages:\n${memory.map(item => item.metadata.text).join("\n")}`
             }]
           }
         ];
 
         // Generate AI response with error handling
-        let response = "Sorry, main abhi available nahi hun. Thoda wait kar ke try karo! 🌶️";
+        let response = "AI service is currently unavailable. Please try again later.";
         try {
-          const userName = messagePayload.userName || `${socket.user.fullName?.firstName || 'User'} ${socket.user.fullName?.lastName || ''}`.trim();
-          console.log(`🤖 Generating AI response for user: ${userName}`);
-          response = await aiService.generateResponse([...ltm, ...stm], userName);
-          console.log(`✅ AI response generated successfully for ${userName}`);
+          response = await aiService.generateResponse([...ltm, ...stm]);
         } catch (aiErr) {
-          console.error("❌ AI service error:", aiErr.message);
-          console.error("AI error stack:", aiErr.stack);
-          // Provide a more helpful fallback response
-          const userName = socket.user.fullName?.firstName || 'Dost';
-          const fallbackResponses = [
-            `Arre ${userName}! Abhi main thoda busy hun 🌶️ - API key check kar raha hun. Kunal Choudhary ne mujhe banaya hai, but abhi technical issue hai!`,
-            `Bhiya Ram ${userName}! Main Jeeravan hun, but abhi Gemini API mein problem hai 😅 - thoda wait karo, jaldi fix ho jayega!`,
-            `${userName}, main hazir hun but API key expired lag raha hai! 🔧 Google AI Studio se naya key banana padega.`,
-            `Jai Shree Mahakal ${userName}! Jeeravan yahan hai, bas technical difficulty aa rahi hai. Sarafa Bazaar jaise busy hun! 😄`
-          ];
-          response = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+          console.error("AI service error:", aiErr.message);
         }
 
         // Emit AI response to user
@@ -122,7 +104,7 @@ function initSocketServer(httpServer) {
         });
 
         // Save AI response & vector only if service worked
-        if (!response.includes("unavailable") && !response.includes("available nahi hun")) {
+        if (response !== "AI service is currently unavailable. Please try again later.") {
           const responseVector = await aiService.generateVector(response);
           const responseMessage = await messageModel.create({
             chat: messagePayload.chat,

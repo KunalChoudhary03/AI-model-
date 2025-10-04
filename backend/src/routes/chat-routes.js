@@ -4,8 +4,6 @@ const chatController = require('../controllers/chat.controller')
 
 const router = express.Router();
 
-router.post('/', authMiddleware.authUser, chatController.createChat)
-router.get('/', authMiddleware.authUser, chatController.getUserChats)
-router.delete('/:chatId', authMiddleware.authUser, chatController.deleteChat)
+router.post('/',authMiddleware.authUser,chatController.createChat)
 
 module.exports = router

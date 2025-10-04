@@ -51,7 +51,7 @@ const Register = () => {
 
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/auth/register`,
+      "http://localhost:3000/api/auth/register",
       {
         fullName: {
           firstName: formData.firstName,
@@ -64,11 +64,7 @@ const Register = () => {
     );
 
     console.log("Register success:", res.data);
-    // Store user data in localStorage
-    if (res.data && res.data.user) {
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-    }
-    navigate("/"); // ✅ redirect to home after success
+    navigate("/login"); // ✅ redirect to login after success
   } catch (err) {
     if (err.response) {
       console.error("Register error (server):", err.response.data);

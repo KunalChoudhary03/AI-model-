@@ -2,24 +2,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  margin: 2px 0;
-  border-radius: 6px;
+  padding: 12px;
+  margin: 4px 0;
+  border-radius: 8px;
   background-color: transparent;
+  transition: all 0.2s ease;
   cursor: pointer;
   border: 1px solid transparent;
-  color: var(--text-primary);
 }
 
 .chat-item:hover {
   background-color: var(--hover-color);
-  border-color: var(--border-color);
 }
 
 .chat-item.active {
   background-color: var(--accent-color);
-  color: var(--text-on-accent);
-  border-color: var(--accent-color);
+  color: white;
 }
 
 .chat-item-content {
@@ -40,32 +38,31 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.875rem;
-  font-weight: 400;
-  color: inherit;
+  font-size: 0.9rem;
 }
 
 .delete-chat-button {
   opacity: 0;
   background: none;
   border: none;
-  padding: 4px;
+  padding: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 4px;
   cursor: pointer;
   color: var(--text-secondary);
+  transition: all 0.2s ease;
   position: relative;
-}
-
-.delete-chat-button:hover {
-  background-color: var(--error-color);
-  color: #ffffff;
 }
 
 .chat-item:hover .delete-chat-button {
   opacity: 1;
+}
+
+.delete-chat-button:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: rgb(239, 68, 68);
 }
 
 /* Delete button tooltip */
@@ -77,7 +74,6 @@
   transform: translateY(-50%) translateX(100%);
   background-color: var(--hover-color);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
