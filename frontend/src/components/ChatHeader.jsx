@@ -2,8 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 
-const ChatHeader = ({ onMenuClick, onProfileClick, userName = "User" }) => {
+const ChatHeader = ({ onMenuClick, onProfileClick, userName = "User", user }) => {
   const navigate = useNavigate();
+
+  // Extract user name from user object or use default
+  const displayName = user?.name || userName || "User";
 
   const handleProfileClick = () => {
     if (onProfileClick) {
@@ -34,7 +37,7 @@ const ChatHeader = ({ onMenuClick, onProfileClick, userName = "User" }) => {
         <button className="profile-button" onClick={handleProfileClick}>
           <div className="user-profile-content">
             <span className="user-icon">👤</span>
-            <span className="user-name-text desktop-only">{userName}</span>
+            <span className="user-name-text desktop-only">{displayName}</span>
           </div>
         </button>
         

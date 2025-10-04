@@ -664,8 +664,9 @@
   .chat-header-right {
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 10px !important;
     flex-shrink: 0 !important;
+    min-width: fit-content !important;
   }
   
   .mobile-only {
