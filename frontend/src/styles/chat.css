@@ -496,8 +496,9 @@ html, body {
   
   .chat-input-form textarea {
     font-size: 16px; /* Prevent zoom on iOS */
-    padding: 8px 10px;
-    min-height: 50px;
+    padding: 6px 8px;
+    min-height: 45px;
+    border-radius: 12px;
   }
   
   .menu-button {
@@ -563,9 +564,9 @@ html, body {
 @media (max-width: 575px) {
   .chat-input-form textarea {
     font-size: 14px;
-    padding: 6px 8px;
-    min-height: 45px;
-    border-radius: 12px;
+    padding: 4px 6px;
+    min-height: 40px;
+    border-radius: 10px;
   }
   
   .chat-input-container {
