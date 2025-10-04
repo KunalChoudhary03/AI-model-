@@ -535,6 +535,16 @@
   white-space: nowrap;
 }
 
+/* Desktop - show user name */
+@media (min-width: 769px) {
+  .user-name-text {
+    display: inline !important;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 .profile-button {
   background: linear-gradient(45deg, #8B4513, #D2691E);
   border: none;
@@ -690,6 +700,21 @@
     min-width: 36px !important;
     min-height: 36px !important;
     border-radius: 50% !important;
+  }
+  
+  /* Hide user name on mobile - only show profile icon */
+  .user-name-text {
+    display: none !important;
+  }
+  
+  .user-profile-content {
+    padding: 0.4rem !important;
+    gap: 0 !important;
+    background: linear-gradient(45deg, #8B4513, #D2691E) !important;
+    border-radius: 50% !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    justify-content: center !important;
   }
 }
   
