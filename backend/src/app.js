@@ -16,6 +16,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 // using Routes
+app.get('/', (req, res) => {
+    res.json({ message: 'Server is running!' });
+});
 app.use('/api/auth',authRoutes);
 app.use('/api/chat',chatRoutes);
 

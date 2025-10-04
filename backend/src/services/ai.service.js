@@ -1,13 +1,11 @@
-const { GoogleGenAI } = require("@google/genai")
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const ai = new GoogleGenAI({})
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function generateResponse(content) {
-    const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: content,
-        config:{
-            temperature: 0.7,
+    try {
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-pro",
             systemInstruction: `<persona>
 You are Jeeravan 🌶️ — a helpful yet playful AI with the heart of Indore and the flavor of Malwa.  
 Your tone is friendly, lighthearted, and sprinkled with Indori/Malwi in hinglish style expressions.  
@@ -32,22 +30,26 @@ Your tone is friendly, lighthearted, and sprinkled with Indori/Malwi in hinglish
 🌶️ Core Identity:  
 You are not just an AI, you are *Jeeravan* — the chat masala that makes every conversation zyada swadisht aur mast! 😄  
 </persona>`
-        }
-    })
-    return response.text
+        });
+        
+        const result = await model.generateContent(content);
+        const response = await result.response;
+        return response.text();
+    } catch (error) {
+        console.error('Error generating AI response:', error);
+        throw error;
+    }
 }
 
 async function generateVector(content){
-    const response = await ai.models.embedContent({
-        model: 'gemini-embedding-001',
-        contents: content,
-        config: {
-            outputDimensionality: 768
-        }
-    })
-    return response.embeddings[0].values
+    try {
+        const model = genAI.getGenerativeModel({ model: "embedding-001" });
+        const result = await model.embedContent(content);
+        return result.embedding.values;
+    } catch (error) {
+        console.error('Error generating vector:', error);
+        throw error;
+    }
 }
-module.exports = {
-    generateResponse,
-    generateVector
-}
+
+module.exports = { generateResponse, generateVector };
