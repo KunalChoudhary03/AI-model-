@@ -30,7 +30,7 @@ const ChatHeader = ({ setShowSidebar, showProfile, user, onProfileClick }) => {
         </div>
       </div>
       
-      <h2 className="chat-title">JEERAVAN v2.1</h2>
+      <h2 className="chat-title">JEERAVAN</h2>
       
       <div className="chat-header-right">
         {showProfile && (
