@@ -624,41 +624,47 @@
   height: 1.5rem;
 }
 
-/* Mobile responsive styles - URGENT FIX */
+/* Mobile responsive styles - ALIGNMENT FIX */
 @media (max-width: 768px) {
   .chat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     padding: 0.75rem 1rem;
     gap: 0.5rem;
     min-height: 55px;
     position: relative;
+    flex-direction: row !important;
   }
   
   .chat-header-left {
-    display: flex;
-    align-items: center;
+    display: flex !important;
+    align-items: center !important;
     gap: 8px;
     flex: 0 0 auto;
-  }
-  
-  .chat-header-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 0 0 auto;
+    order: 1;
   }
   
   .chat-title {
-    flex: 1;
-    text-align: center;
+    flex: 1 !important;
+    text-align: center !important;
     font-size: 1rem;
-    margin: 0;
+    margin: 0 !important;
+    order: 2;
+    align-self: center !important;
+  }
+  
+  .chat-header-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px;
+    flex: 0 0 auto;
+    order: 3;
   }
   
   .mobile-only {
     display: flex !important;
+    align-items: center !important;
   }
   
   .desktop-only {
@@ -671,11 +677,25 @@
     border: 1px solid var(--border-color);
     border-radius: 8px;
     color: var(--text-primary);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   
   .menu-icon {
     width: 1.2rem;
     height: 1.2rem;
+  }
+  
+  .profile-section {
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  .profile-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }
   
