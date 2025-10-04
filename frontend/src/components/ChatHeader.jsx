@@ -1,69 +1,44 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import ThemeToggle from "./ThemeToggle";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
 
-const ChatHeader = ({ setShowSidebar, showProfile, user, onProfileClick }) => {
+const ChatHeader = ({ onMenuClick, onProfileClick, userName = "User" }) => {
   const navigate = useNavigate();
 
   const handleProfileClick = () => {
-    if (user) {
-      navigate("/profile");
-    } else {
+    if (onProfileClick) {
       onProfileClick();
     }
   };
 
   return (
     <div className="chat-header">
+      {/* Left: Hamburger Menu */}
       <div className="chat-header-left">
-        <button
-          className="menu-button"
-          onClick={() => setShowSidebar && setShowSidebar((prev) => !prev)}
-          aria-label="Toggle sidebar"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="menu-icon">
-            <path fillRule="evenodd" d="M3 6.75A.75.75 0 713.75 6h16.5a.75.75 0 010 1.5H3.75A.75.75 0 713 6.75zM3 12a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75A.75.75 0 713 12zm0 5.25a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+        <button className="menu-button" onClick={onMenuClick}>
+          <svg className="menu-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
           </svg>
         </button>
-        <div className="mobile-theme-toggle mobile-only">
-          <ThemeToggle />
-        </div>
       </div>
-      
-      <h2 className="chat-title">JEERAVAN</h2>
-      
+
+      {/* Center: JEERAVAN Title */}
+      <h1 className="chat-title">JEERAVAN</h1>
+
+      {/* Right: Theme Toggle + Profile */}
       <div className="chat-header-right">
-        <div className="mobile-theme-toggle mobile-only">
+        <div className="mobile-only">
           <ThemeToggle />
         </div>
-        {showProfile && (
-          <div className="profile-section">
-            {user ? (
-              <div 
-                className="user-profile-badge"
-                onClick={handleProfileClick}
-              >
-                <div className="user-profile-content">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="12" fill="#fff"/>
-                    <text x="12" y="17" textAnchor="middle" fontSize="12" fill="#8B4513">👤</text>
-                  </svg>
-                  <span className="user-name-text">
-                    {user.fullName?.firstName} {user.fullName?.lastName}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <button className="profile-button" aria-label="Profile/Login/Register" onClick={handleProfileClick}>
-                <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
-                  <circle cx="16" cy="16" r="16" fill="#fff"/>
-                  <text x="16" y="21" textAnchor="middle" fontSize="16" fill="#8B4513">👤</text>
-                </svg>
-              </button>
-            )}
+        
+        <button className="profile-button" onClick={handleProfileClick}>
+          <div className="user-profile-content">
+            <span className="user-icon">👤</span>
+            <span className="user-name-text desktop-only">{userName}</span>
           </div>
-        )}
-        <div className="desktop-theme-toggle desktop-only">
+        </button>
+        
+        <div className="desktop-only">
           <ThemeToggle />
         </div>
       </div>

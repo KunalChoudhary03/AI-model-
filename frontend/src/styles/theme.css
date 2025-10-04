@@ -634,29 +634,31 @@
   height: 1.5rem;
 }
 
-/* Mobile fix - inline layout: JEERAVAN [🌙] [👤] */
+/* Mobile layout: [☰] JEERAVAN [🌙] [👤] */
 @media (max-width: 768px) {
   .chat-header {
     display: flex !important;
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: space-between !important;
     padding: 0.5rem 0.75rem !important;
     gap: 8px !important;
     min-height: 50px !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    flex-wrap: nowrap !important;
   }
   
   .chat-header-left {
-    display: none !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
   }
   
   .chat-title {
+    flex: 1 !important;
+    text-align: center !important;
     font-size: 0.9rem !important;
     margin: 0 !important;
     white-space: nowrap !important;
-    flex-shrink: 0 !important;
   }
   
   .chat-header-right {
@@ -664,7 +666,6 @@
     align-items: center !important;
     gap: 6px !important;
     flex-shrink: 0 !important;
-    margin-left: 8px !important;
   }
   
   .mobile-only {
@@ -677,7 +678,20 @@
   }
   
   .menu-button {
-    display: none !important;
+    display: flex !important;
+    padding: 0.4rem !important;
+    background-color: var(--background-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .menu-icon {
+    width: 1rem !important;
+    height: 1rem !important;
   }
   
   .profile-button {
