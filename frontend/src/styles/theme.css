@@ -634,42 +634,37 @@
   height: 1.5rem;
 }
 
-/* Mobile fix for Redmi/Realme devices */
+/* Mobile fix - inline layout: JEERAVAN [🌙] [👤] */
 @media (max-width: 768px) {
   .chat-header {
     display: flex !important;
     align-items: center !important;
-    justify-content: space-between !important;
+    justify-content: center !important;
     padding: 0.5rem 0.75rem !important;
-    gap: 4px !important;
+    gap: 8px !important;
     min-height: 50px !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    flex-wrap: nowrap !important;
   }
   
   .chat-header-left {
-    display: flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    flex-shrink: 0 !important;
-    min-width: fit-content !important;
+    display: none !important;
   }
   
   .chat-title {
-    flex: 1 !important;
-    text-align: center !important;
     font-size: 0.9rem !important;
     margin: 0 !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
+    flex-shrink: 0 !important;
   }
   
   .chat-header-right {
     display: flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 6px !important;
     flex-shrink: 0 !important;
-    min-width: fit-content !important;
+    margin-left: 8px !important;
   }
   
   .mobile-only {
@@ -682,17 +677,7 @@
   }
   
   .menu-button {
-    padding: 0.4rem !important;
-    background-color: var(--background-secondary) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 6px !important;
-    min-width: 36px !important;
-    min-height: 36px !important;
-  }
-  
-  .menu-icon {
-    width: 1rem !important;
-    height: 1rem !important;
+    display: none !important;
   }
   
   .profile-button {
@@ -700,6 +685,7 @@
     min-width: 36px !important;
     min-height: 36px !important;
     border-radius: 50% !important;
+    flex-shrink: 0 !important;
   }
   
   /* Hide user name on mobile - only show profile icon */
@@ -715,6 +701,7 @@
     min-width: 36px !important;
     min-height: 36px !important;
     justify-content: center !important;
+    flex-shrink: 0 !important;
   }
 }
   
