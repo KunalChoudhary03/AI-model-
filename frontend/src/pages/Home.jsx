@@ -7,9 +7,6 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
-// Initialize Socket.IO client
-const socket = io("http://localhost:3000", { withCredentials: true });
-
 const Home = () => {
   const [chatSessions, setChatSessions] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
@@ -18,6 +15,58 @@ const Home = () => {
   const [showModal, setShowModal] = useState(false);
   const [chatNameInput, setChatNameInput] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false); // Loading state
+  const [socket, setSocket] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check authentication and initialize socket
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        setIsLoading(true);
+        // Check if user is authenticated by calling a protected endpoint
+        const response = await axios.get('http://localhost:3000/api/auth/profile', { 
+          withCredentials: true 
+        });
+        
+        if (response.data) {
+          setIsAuthenticated(true);
+          // Initialize socket connection only after authentication
+          const socketInstance = io("http://localhost:3000", { 
+            withCredentials: true,
+            autoConnect: true
+          });
+          
+          socketInstance.on('connect', () => {
+            console.log('🔌 Socket connected successfully');
+          });
+          
+          socketInstance.on('connect_error', (error) => {
+            console.error('🔌 Socket connection error:', error);
+            toast.error('Connection failed. Please login again.');
+          });
+          
+          setSocket(socketInstance);
+        }
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        setIsAuthenticated(false);
+        // Redirect to login if not authenticated
+        window.location.href = '/login';
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Cleanup socket on unmount
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, []);
 
   // Fetch messages for a chat
   const fetchMessages = async (chatId) => {
@@ -61,6 +110,8 @@ const Home = () => {
 
   // Listen for AI responses via Socket.IO
   useEffect(() => {
+    if (!socket) return;
+    
     const handler = ({ content, chat }) => {
       setChatSessions(prev =>
         prev.map(c =>
@@ -70,9 +121,10 @@ const Home = () => {
         )
       );
     };
+    
     socket.on('ai-response', handler);
     return () => socket.off('ai-response', handler);
-  }, []);
+  }, [socket]);
 
   const activeChat = chatSessions.find(c => c.id === activeChatId);
   const messages = activeChat ? activeChat.messages : [];
@@ -85,6 +137,10 @@ const Home = () => {
       return;
     }
     if (!input.trim()) return;
+    if (!socket) {
+      toast.error('Connection not established. Please refresh the page.');
+      return;
+    }
 
     const newMessage = { sender: 'user', text: input };
     setChatSessions(prev =>
@@ -138,6 +194,35 @@ const Home = () => {
   };
 
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Authentication required</p>
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row" style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}>

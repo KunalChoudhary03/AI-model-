@@ -56,5 +56,23 @@ async function loginUser(req,res) {
     })
 }
 
+async function getProfile(req, res) {
+    try {
+        const user = req.user; // From auth middleware
+        res.status(200).json({
+            message: "Profile retrieved successfully",
+            user: {
+                email: user.email,
+                _id: user._id,
+                fullName: user.fullName
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Error retrieving profile",
+            error: error.message 
+        });
+    }
+}
 
-module.exports = {registerUser, loginUser}
+module.exports = {registerUser, loginUser, getProfile}
