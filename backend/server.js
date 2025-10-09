@@ -7,8 +7,9 @@ const httpServer = require('http').createServer(app);
 connectDb();
 initSocketServer(httpServer);
 
-httpServer.listen(3000, '0.0.0.0', ()=>{
-    console.log('Server is running on port 3000');
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, '0.0.0.0', ()=>{
+    console.log(`Server is running on port ${PORT}`);
 }).on('error', (err) => {
     console.error('Server error:', err);
 });
