@@ -36,7 +36,7 @@ const Login = () => {
 
     if (!validateForm()) return;
 
-    axios.post("http://localhost:3000/api/auth/login", 
+    axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, 
       {
         email: formData.email,
         password: formData.password

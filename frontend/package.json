@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
     "dev": "vite",
     "build": "vite build",
-    "build:vercel": "npm install && vite build",
+    "vercel-build": "npm ci && vite build",
+    "build:production": "NODE_ENV=production vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
